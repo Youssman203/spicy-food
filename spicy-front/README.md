@@ -1,5 +1,9 @@
 # Spicy Food Truck
 
+## Déployer la V1
+
+Le [guide de déploiement](DEPLOIEMENT.md) décrit la mise en ligne sur un serveur Linux derrière votre Traefik central en réseau `host`. Les fichiers `Dockerfile`, `compose.yaml`, `.env.example` et `deploy/nginx.conf` sont fournis. Le domaine public se renseigne dans `.env`.
+
 Application monopage en français, React + Vite, Tailwind CSS et Lucide React. Conçue pour Lubumbashi et Kolwezi, avec animations CSS et prise en compte de `prefers-reduced-motion`.
 
 ## Démarrer

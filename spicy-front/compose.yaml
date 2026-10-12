@@ -1,0 +1,40 @@
+name: ${COMPOSE_PROJECT_NAME:-spicy-v1}
+
+services:
+  frontend:
+    image: spicy-front:${SPICY_IMAGE_TAG:-v1.0.0}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    expose:
+      - "8080"
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${COMPOSE_PROJECT_NAME:-spicy-v1}-web"
+      - 'traefik.http.routers.${COMPOSE_PROJECT_NAME:-spicy-v1}.rule=Host(`${SPICY_DOMAIN:?Renseigner SPICY_DOMAIN dans .env}`)'
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME:-spicy-v1}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME:-spicy-v1}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME:-spicy-v1}.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME:-spicy-v1}.service=${COMPOSE_PROJECT_NAME:-spicy-v1}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME:-spicy-v1}.loadbalancer.server.port=8080"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME:-spicy-v1}.loadbalancer.server.scheme=http"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  web:
+    name: ${COMPOSE_PROJECT_NAME:-spicy-v1}-web
+    driver: bridge
