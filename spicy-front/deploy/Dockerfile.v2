@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1
+FROM node:24-alpine AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY spicy-front/package.json ./spicy-front/package.json
+COPY spicy-admin/package.json ./spicy-admin/package.json
+COPY spicy-supadmin/package.json ./spicy-supadmin/package.json
+COPY spicy-back/package.json ./spicy-back/package.json
+RUN npm ci --no-audit --no-fund
+COPY spicy-front ./spicy-front
+COPY spicy-admin ./spicy-admin
+COPY spicy-supadmin ./spicy-supadmin
+ARG APP_DIR=spicy-front
+RUN npm run build --workspace=${APP_DIR}
+FROM nginx:stable-alpine
+ARG APP_DIR=spicy-front
+ARG APP_BASE=/
+COPY spicy-front/deploy/nginx-v2.conf /etc/nginx/nginx.conf
+COPY --from=build --chown=nginx:nginx /app/${APP_DIR}/dist /usr/share/nginx/html${APP_BASE}
+USER nginx
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 CMD wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1
+ENTRYPOINT ["nginx"]
+CMD ["-g", "daemon off;"]

@@ -1,0 +1,142 @@
+name: ${COMPOSE_PROJECT_NAME:-spicy-v2}
+
+x-logging: &logging
+  driver: json-file
+  options: {max-size: "10m", max-file: "3"}
+x-static: &static
+  restart: unless-stopped
+  read_only: true
+  tmpfs: ["/tmp:rw,noexec,nosuid,size=32m,mode=1777"]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  expose: ["8080"]
+  networks: [traefik]
+  logging: *logging
+x-api-env: &api-env
+  NODE_ENV: production
+  DB_HOST: spicy-data
+  POSTGRES_DB: ${POSTGRES_DB:-spicy}
+  POSTGRES_USER: ${POSTGRES_USER:-spicy}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definir POSTGRES_PASSWORD dans .env}
+  JWT_SECRET: ${JWT_SECRET:?Definir JWT_SECRET dans .env}
+  APP_ORIGINS: ${APP_ORIGINS:-https://spicy-drc.tech}
+
+services:
+  spicy-front:
+    <<: *static
+    image: spicy-front:${SPICY_IMAGE_TAG:-v2.0.0}
+    build:
+      context: .
+      dockerfile: spicy-front/deploy/Dockerfile.v2
+      args: {APP_DIR: spicy-front, APP_BASE: /}
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:-traefik-public}
+      traefik.http.routers.spicy-v2-front.rule: Host(`${SPICY_DOMAIN:-spicy-drc.tech}`)
+      traefik.http.routers.spicy-v2-front.priority: "10"
+      traefik.http.routers.spicy-v2-front.entrypoints: websecure
+      traefik.http.routers.spicy-v2-front.tls: "true"
+      traefik.http.routers.spicy-v2-front.tls.certresolver: letsencrypt
+      traefik.http.routers.spicy-v2-front.service: spicy-v2-front
+      traefik.http.services.spicy-v2-front.loadbalancer.server.port: "8080"
+
+  spicy-admin:
+    <<: *static
+    image: spicy-admin:${SPICY_IMAGE_TAG:-v2.0.0}
+    build:
+      context: .
+      dockerfile: spicy-front/deploy/Dockerfile.v2
+      args: {APP_DIR: spicy-admin, APP_BASE: /admin/}
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:-traefik-public}
+      traefik.http.routers.spicy-v2-admin.rule: Host(`${SPICY_DOMAIN:-spicy-drc.tech}`) && (Path(`/admin`) || PathPrefix(`/admin/`))
+      traefik.http.routers.spicy-v2-admin.priority: "100"
+      traefik.http.routers.spicy-v2-admin.entrypoints: websecure
+      traefik.http.routers.spicy-v2-admin.tls: "true"
+      traefik.http.routers.spicy-v2-admin.tls.certresolver: letsencrypt
+      traefik.http.routers.spicy-v2-admin.service: spicy-v2-admin
+      traefik.http.services.spicy-v2-admin.loadbalancer.server.port: "8080"
+
+  spicy-supadmin:
+    <<: *static
+    image: spicy-supadmin:${SPICY_IMAGE_TAG:-v2.0.0}
+    build:
+      context: .
+      dockerfile: spicy-front/deploy/Dockerfile.v2
+      args: {APP_DIR: spicy-supadmin, APP_BASE: /superadmin/}
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:-traefik-public}
+      traefik.http.routers.spicy-v2-superadmin.rule: Host(`${SPICY_DOMAIN:-spicy-drc.tech}`) && (Path(`/superadmin`) || PathPrefix(`/superadmin/`))
+      traefik.http.routers.spicy-v2-superadmin.priority: "100"
+      traefik.http.routers.spicy-v2-superadmin.entrypoints: websecure
+      traefik.http.routers.spicy-v2-superadmin.tls: "true"
+      traefik.http.routers.spicy-v2-superadmin.tls.certresolver: letsencrypt
+      traefik.http.routers.spicy-v2-superadmin.service: spicy-v2-superadmin
+      traefik.http.services.spicy-v2-superadmin.loadbalancer.server.port: "8080"
+
+  spicy-back:
+    image: spicy-back:${SPICY_IMAGE_TAG:-v2.0.0}
+    build: {context: ., dockerfile: spicy-back/Dockerfile}
+    restart: unless-stopped
+    environment: *api-env
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=16m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    expose: ["3000"]
+    networks: [traefik, data]
+    logging: *logging
+    depends_on:
+      spicy-data: {condition: service_healthy}
+      spicy-migrate: {condition: service_completed_successfully}
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:-traefik-public}
+      traefik.http.routers.spicy-v2-api.rule: Host(`${SPICY_DOMAIN:-spicy-drc.tech}`) && (Path(`/api`) || PathPrefix(`/api/`))
+      traefik.http.routers.spicy-v2-api.priority: "200"
+      traefik.http.routers.spicy-v2-api.entrypoints: websecure
+      traefik.http.routers.spicy-v2-api.tls: "true"
+      traefik.http.routers.spicy-v2-api.tls.certresolver: letsencrypt
+      traefik.http.routers.spicy-v2-api.service: spicy-v2-api
+      traefik.http.services.spicy-v2-api.loadbalancer.server.port: "3000"
+
+  spicy-migrate:
+    image: spicy-back:${SPICY_IMAGE_TAG:-v2.0.0}
+    build: {context: ., dockerfile: spicy-back/Dockerfile}
+    restart: "no"
+    environment: *api-env
+    command: ["sh", "-c", "node spicy-back/scripts/database.js migrate && node spicy-back/scripts/database.js seed"]
+    healthcheck: {disable: true}
+    networks: [data]
+    depends_on:
+      spicy-data: {condition: service_healthy}
+    labels: {traefik.enable: "false"}
+    logging: *logging
+
+  spicy-data:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-spicy}
+      POSTGRES_USER: ${POSTGRES_USER:-spicy}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definir POSTGRES_PASSWORD dans .env}
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    networks: [traefik, data]
+    labels: {traefik.enable: "false"}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    logging: *logging
+
+networks:
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik-public}
+  data:
+    internal: true
+volumes:
+  postgres-data:

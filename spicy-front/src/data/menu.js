@@ -1,5 +1,5 @@
 export const categories = ['Tous', 'Tacos', 'Sandwichs', 'Plats & Frites', 'Boissons'];
-export const heatLevels = ['Doux', 'Moyen', 'Fiery / Intense'];
+export const heatLevels = ['Doux', 'Moyen', 'Fiery'];
 export const photos = {
   tacos: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=1200&q=85',
   sandwich: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=900&q=85',

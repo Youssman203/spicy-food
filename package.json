@@ -1,0 +1,13 @@
+{
+  "name": "spicy-v2", "version": "2.0.0", "private": true, "type": "module",
+  "workspaces": ["spicy-front", "spicy-admin", "spicy-supadmin", "spicy-back"],
+  "scripts": {
+    "build": "npm run build -w spicy-front && npm run build -w spicy-admin && npm run build -w spicy-supadmin",
+    "test": "npm test -w spicy-front && npm test -w spicy-back",
+    "demo": "node spicy-back/scripts/preview-v2.js",
+    "dev:front": "npm run dev -w spicy-front", "dev:admin": "npm run dev -w spicy-admin",
+    "dev:superadmin": "npm run dev -w spicy-supadmin", "dev:api": "npm run dev -w spicy-back",
+    "db:migrate": "npm run migrate -w spicy-back", "db:seed": "npm run seed -w spicy-back", "admin:create": "npm run admin:create -w spicy-back"
+  },
+  "engines": {"node": ">=24"}
+}

@@ -1,3 +1,5 @@
+> Archive V1 : pour le code actuel et le deploiement V2, suivre [le README du monorepo](../README.md) et [la validation V2](../VALIDATION-V2.md). Les instructions ci-dessous decrivent la version precedente.
+
 # Vérifications du 12 octobre 2026
 
 - `npm run build` : compilation de production réussie ; sortie dans `dist/`.

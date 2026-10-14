@@ -6,7 +6,7 @@ export default {
         smoke: '#7D7D7D', stone: '#D3D3D3', white: '#FFFFFF',
       },
       fontFamily: {
-        sans: ['DM Sans', 'sans-serif'], display: ['Barlow Condensed', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'], display: ['Oswald', 'Impact', 'sans-serif'],
       },
     },
   },

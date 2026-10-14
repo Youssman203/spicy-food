@@ -1,3 +1,5 @@
+> Archive V1 : pour le code actuel et le deploiement V2, suivre [le README du monorepo](../README.md) et [la validation V2](../VALIDATION-V2.md). Les instructions ci-dessous decrivent la version precedente.
+
 # Déployer Spicy Food Truck V1 avec le Traefik central
 
 Ce guide publie le site à la racine d’un domaine, par exemple `https://spicy.votre-domaine.com`. Remplacer les domaines et adresses d’exemple par les vôtres. Le déploiement est à exécuter sur votre serveur ; aucune mise en ligne n’est effectuée par la création de ces fichiers.
