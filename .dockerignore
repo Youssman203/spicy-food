@@ -8,3 +8,5 @@
 **/*.tar.gz
 backups
 coverage
+uploads
+**/uploads

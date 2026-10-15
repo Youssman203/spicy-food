@@ -11,11 +11,14 @@ import CartDialog from './components/CartDialog';
 import { addToCart, money, totalPrice } from './lib/order';
 import { request, toProduct } from './lib/api';
 import { SiteContext } from './lib/SiteContext';
+import { CustomerProvider } from './lib/CustomerContext';
+import CustomerSpace from './components/CustomerSpace';
 
 export default function App() {
   const [lines, setLines] = useState([]);
   const [product, setProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const [menu, setMenu] = useState([]);
   const [settings, setSettings] = useState(null);
@@ -43,9 +46,9 @@ export default function App() {
     setLines((current) => addToCart(current, product, variant, heat));
     setToast({ name: product.name });
   }
-  return <SiteContext.Provider value={settings}>
+  return <CustomerProvider><SiteContext.Provider value={settings}>
     <a className="skip-link" href="#menu">Aller au menu</a>
-    <Navbar count={count} onCart={() => setCartOpen(true)} />
+    <Navbar count={count} onCart={() => {setAccountOpen(false);setCartOpen(true);}} onAccount={()=>{setCartOpen(false);setAccountOpen(true);}} />
     {settings?.site_notice && <p className="site-notice">{settings.site_notice}</p>}
     <main><Hero /><MenuSection onSelect={setProduct} menu={menu} loading={loading} error={menuError} /><Locations /><About /></main>
     {settingsError && <p className="shell api-error" role="status">{settingsError}</p>}
@@ -53,6 +56,7 @@ export default function App() {
     {count > 0 && !cartOpen && !product && <button className="floating-cart" onClick={() => setCartOpen(true)}><ShoppingBag size={18} /><span>Mon panier <b>{count}</b></span><strong>{money(totalPrice(lines))}</strong><ArrowUpRight size={19} /></button>}
     <div className="toast-region" role="status" aria-live="polite">{toast && <div className="toast"><Check size={17} />{toast.name} ajouté au panier</div>}</div>
     {product && <ProductDialog product={product} onClose={() => setProduct(null)} onAdd={add} />}
-    {cartOpen && <CartDialog lines={lines} onOrdered={() => setLines([])} onClose={() => setCartOpen(false)} onQuantity={(key, delta) => setLines((current) => current.map((line) => line.key === key ? { ...line, quantity: Math.max(1, Math.min(99, line.quantity + delta)) } : line))} onRemove={(key) => setLines((current) => current.filter((line) => line.key !== key))} />}
-  </SiteContext.Provider>;
+    {cartOpen && <CartDialog lines={lines} onTrack={()=>{setCartOpen(false);setAccountOpen(true);}} onOrdered={() => setLines([])} onClose={() => setCartOpen(false)} onQuantity={(key, delta) => setLines((current) => current.map((line) => line.key === key ? { ...line, quantity: Math.max(1, Math.min(99, line.quantity + delta)) } : line))} onRemove={(key) => setLines((current) => current.filter((line) => line.key !== key))} />}
+    {accountOpen&&<CustomerSpace onClose={()=>setAccountOpen(false)}/>}
+  </SiteContext.Provider></CustomerProvider>;
 }

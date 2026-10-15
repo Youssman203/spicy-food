@@ -20,11 +20,12 @@ x-api-env: &api-env
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definir POSTGRES_PASSWORD dans .env}
   JWT_SECRET: ${JWT_SECRET:?Definir JWT_SECRET dans .env}
   APP_ORIGINS: ${APP_ORIGINS:-https://spicy-drc.tech}
+  UPLOAD_DIR: /app/uploads
 
 services:
   spicy-front:
     <<: *static
-    image: spicy-front:${SPICY_IMAGE_TAG:-v2.0.0}
+    image: spicy-front:${SPICY_IMAGE_TAG:-v2.2.0}
     build:
       context: .
       dockerfile: spicy-front/deploy/Dockerfile.v2
@@ -42,7 +43,7 @@ services:
 
   spicy-admin:
     <<: *static
-    image: spicy-admin:${SPICY_IMAGE_TAG:-v2.0.0}
+    image: spicy-admin:${SPICY_IMAGE_TAG:-v2.2.0}
     build:
       context: .
       dockerfile: spicy-front/deploy/Dockerfile.v2
@@ -60,7 +61,7 @@ services:
 
   spicy-supadmin:
     <<: *static
-    image: spicy-supadmin:${SPICY_IMAGE_TAG:-v2.0.0}
+    image: spicy-supadmin:${SPICY_IMAGE_TAG:-v2.2.0}
     build:
       context: .
       dockerfile: spicy-front/deploy/Dockerfile.v2
@@ -77,10 +78,11 @@ services:
       traefik.http.services.spicy-v2-superadmin.loadbalancer.server.port: "8080"
 
   spicy-back:
-    image: spicy-back:${SPICY_IMAGE_TAG:-v2.0.0}
+    image: spicy-back:${SPICY_IMAGE_TAG:-v2.2.0}
     build: {context: ., dockerfile: spicy-back/Dockerfile}
     restart: unless-stopped
     environment: *api-env
+    volumes: ["menu-uploads:/app/uploads"]
     read_only: true
     tmpfs: ["/tmp:rw,noexec,nosuid,size=16m,mode=1777"]
     cap_drop: [ALL]
@@ -103,7 +105,7 @@ services:
       traefik.http.services.spicy-v2-api.loadbalancer.server.port: "3000"
 
   spicy-migrate:
-    image: spicy-back:${SPICY_IMAGE_TAG:-v2.0.0}
+    image: spicy-back:${SPICY_IMAGE_TAG:-v2.2.0}
     build: {context: ., dockerfile: spicy-back/Dockerfile}
     restart: "no"
     environment: *api-env
@@ -123,7 +125,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-spicy}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definir POSTGRES_PASSWORD dans .env}
     volumes: ["postgres-data:/var/lib/postgresql/data"]
-    networks: [traefik, data]
+    networks: [data]
     labels: {traefik.enable: "false"}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
@@ -140,3 +142,4 @@ networks:
     internal: true
 volumes:
   postgres-data:
+  menu-uploads:

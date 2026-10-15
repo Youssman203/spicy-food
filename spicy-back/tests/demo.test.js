@@ -20,6 +20,23 @@ test('accès imprimés par la démo : connexion des deux rôles et réaffichage 
  await waitFor(()=>output.includes('Les données disparaissent'));
  const address=output.match(/Admin : (http:\/\/127\.0\.0\.1:\d+)\/admin\//)[1];
  const password=output.match(/Mot de passe commun : ([\w-]+)/)[1];
+ const page=await fetch(`${address}/demo/`);assert.equal(page.status,200);
+ const html=await page.text();assert.match(html,/Tester l’interface admin/);assert.match(html,/Tester l’interface super admin/);assert.ok(!html.includes(password));
+ const info=await fetch(`${address}/api/demo`);assert.equal((await info.json()).enabled,true);
+ for(const audience of ['admin','superadmin']){
+  for(const origin of [undefined,'https://evil.example']){
+   const denied=await fetch(`${address}/api/demo/${audience}/enter`,{method:'POST',headers:origin?{Origin:origin}:{},redirect:'manual'});assert.equal(denied.status,403);
+  }
+  const direct=await fetch(`${address}/api/demo/${audience}/enter`,{method:'POST',headers:{Origin:address},redirect:'manual'});
+  assert.equal(direct.status,303);assert.equal(direct.headers.get('location'),`/${audience}/`);
+  const cookie=direct.headers.get('set-cookie').split(';')[0];assert.match(direct.headers.get('set-cookie'),/HttpOnly/);
+  const session=await fetch(`${address}/api/${audience}/session`,{headers:{Cookie:cookie}});assert.equal(session.status,200);
+  const user=await session.json();assert.equal(user.role,audience==='admin'?'admin':'super_admin');assert.ok(user.csrf_token);
+  const data=await fetch(`${address}/api/${audience}/orders`,{headers:{Cookie:cookie}});assert.equal(data.status,200);
+  const forbidden=await fetch(`${address}/api/${audience}/logout`,{method:'POST',headers:{Origin:address,Cookie:cookie}});assert.equal(forbidden.status,403);
+  const logout=await fetch(`${address}/api/${audience}/logout`,{method:'POST',headers:{Origin:address,Cookie:cookie,'X-CSRF-Token':user.csrf_token}});assert.equal(logout.status,204);
+  assert.equal((await fetch(`${address}/api/${audience}/session`,{headers:{Cookie:cookie}})).status,401);
+ }
  for(const [audience,email,role] of [['admin','admin@spicy.test','admin'],['superadmin','super@spicy.test','super_admin']]){
   for(const origin of [address,address.replace('127.0.0.1','localhost')]){
    const response=await fetch(`${address}/api/${audience}/login`,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({email,password})});

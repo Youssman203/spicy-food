@@ -1,6 +1,30 @@
 {
-  "name": "spicy-back", "version": "2.0.0", "private": true, "type": "module",
-  "scripts": {"start": "node src/server.js", "dev": "node --env-file-if-exists=../.env --watch src/server.js", "test": "node --test tests/*.test.js", "migrate": "node --env-file-if-exists=../.env scripts/database.js migrate", "seed": "node --env-file-if-exists=../.env scripts/database.js seed", "admin:create": "node --env-file-if-exists=../.env scripts/create-admin.js"},
-  "dependencies": {"express": "^5.1.0", "cookie-parser": "^1.4.7", "express-rate-limit": "^8.1.0", "helmet": "^8.1.0", "jsonwebtoken": "^9.0.2", "pg": "^8.16.3", "zod": "^4.1.0"},
-  "devDependencies": {"supertest": "^7.1.4", "@electric-sql/pglite": "^0.3.14"}
+  "name": "spicy-back",
+  "version": "2.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --env-file-if-exists=../.env --watch src/server.js",
+    "test": "node --test --test-concurrency=1 tests/*.test.js",
+    "migrate": "node --env-file-if-exists=../.env scripts/database.js migrate",
+    "seed": "node --env-file-if-exists=../.env scripts/database.js seed",
+    "admin:create": "node --env-file-if-exists=../.env scripts/create-admin.js",
+    "admin:reset": "node --env-file-if-exists=../.env scripts/reset-admin-password.js",
+    "admin:list": "node --env-file-if-exists=../.env scripts/list-admins.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3",
+    "sharp": "^0.35.5",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.3.14",
+    "supertest": "^7.1.4"
+  }
 }

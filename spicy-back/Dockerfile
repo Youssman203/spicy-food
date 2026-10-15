@@ -10,6 +10,7 @@ COPY spicy-back/package.json ./spicy-back/package.json
 RUN npm ci --omit=dev --workspace=spicy-back --include-workspace-root=false --no-audit --no-fund
 COPY --chown=node:node spicy-back ./spicy-back
 COPY --chown=node:node spicy-data ./spicy-data
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
